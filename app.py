@@ -25,7 +25,7 @@ class Places(Resource):
         place_lat = args['lat']
         place_long = args['long']
         place_name_hash = hash(place_name)
-        place_id = int(place_lat) + int(place_long) + place_name_hash
+        place_id = int(place_lat*1000) + int(place_long*1000) + place_name_hash #allows for multiple locations in the same lat long, and places with the same name in different latlongs, but NOT both the same
 
 
         new_data = pd.DataFrame({
