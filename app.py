@@ -81,13 +81,13 @@ class Reviews(Resource):
         data = pd.read_csv('csv/places.csv')
         data = data.to_dict()
 
-        if place_id not in list(data['place_id']): # verifies the place the review is for exists in db
+        if str(place_id) not in list(data['place_id']): # verifies the place the review is for exists in db
             return {
                 'message': f"Place id {place_id} does not exist."
             }, 400
         data.clear()
         data = pd.read_csv('csv/reviews.csv')
-
+        
         if review_id in list(data['review_id']): # verifies review is not a duplicate
             return {
                 'message': f"Review id {review_id} already exists (is this a duplicate review?)."
