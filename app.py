@@ -39,7 +39,7 @@ class Places(Resource):
         if place_id in list(data['place_id']):
             return {
                 'message': f"Place id {place_id} already exists."
-            }, 401
+            }, 400
         else:
             # add the newly provided values
             data = data.append(new_data, ignore_index=True)
@@ -62,7 +62,49 @@ class Reviews(Resource):
         return {'data': data}, 200
     
     def post(self):
-        return
+        parser = reqparse.RequestParser(bundle_errors=True)
+
+        parser.add_argument('user', required=True) 
+        parser.add_argument('rating', type=int, required=True)
+        parser.add_argument('text', required=True)
+        parser.add_argument('place_id', required=True)
+
+        args=parser.parse_args()
+
+        user = args['user']
+        rating = args['rating']
+        text = args['text']
+        place_id = args['place_id']
+
+        review_id = hash(user) + hash(text) + rating + place_id # allows user to post updated review if place improves or declines, but not duplicate reviews
+
+        data = pd.read_csv('csv/places.csv')
+        data = data.to_dict()
+
+        if place_id not in list(data['place_id']): # verifies the place the review is for exists in db
+            return {
+                'message': f"Place id {place_id} does not exist."
+            }, 400
+        data.clear()
+        data = pd.read_csv('csv/reviews.csv')
+
+        if review_id in list(data['review_id']): # verifies review is not a duplicate
+            return {
+                'message': f"Review id {review_id} already exists (is this a duplicate review?)."
+            }, 400
+
+        else:
+            new_data = pd.DataFrame({
+                'review': [review_id],
+                'user': [user],
+                'rating': [rating],
+                'text': [text]
+            })
+             # add the newly provided values
+            data = data.append(new_data, ignore_index=True)
+            # save back to CSV
+            data.to_csv('csv/places.csv', index=False)
+            return {'data': data.to_dict()}, 200  # returns updated data with 200 OK
 
     def put(self):
         return
