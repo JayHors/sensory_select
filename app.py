@@ -76,7 +76,7 @@ class Reviews(Resource):
         text = args['text']
         place_id = args['place_id']
 
-        review_id = hash(user) + hash(text) + rating + place_id # allows user to post updated review if place improves or declines, but not duplicate reviews
+        review_id = hash(user) + hash(text) + int(rating) + int(place_id) # allows user to post updated review if place improves or declines, but not duplicate reviews
 
         data = pd.read_csv('csv/places.csv')
         data = data.to_dict()
