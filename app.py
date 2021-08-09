@@ -1,10 +1,23 @@
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
 import pandas as pd
-import ast
+import uuid
 
 app = Flask(__name__)
 api = Api(app)
+
+root_uuid = uuid.UUID()
+
+@app.before_first_request
+def root_uuid_check():
+    try:
+        uuid_file = open("uuid")
+        root_uuid = uuid.UUID(uuid_file.read())
+        uuid_file.close()
+    except:
+        uuid_file = open("uuid", "wt")
+        root_uuid = uuid.uuid4()
+        uuid_file.write(str(root_uuid))
 
 class Places(Resource):
     def get(self):
@@ -24,8 +37,8 @@ class Places(Resource):
         place_name = args['name']
         place_lat = args['lat']
         place_long = args['long']
-        place_name_hash = hash(place_name)
-        place_id = int(place_lat*1000) + int(place_long*1000) + place_name_hash #allows for multiple locations in the same lat long, and places with the same name in different latlongs, but NOT both the same
+
+        place_id = 0
 
 
         new_data = pd.DataFrame({
@@ -81,10 +94,11 @@ class Reviews(Resource):
         data = pd.read_csv('csv/places.csv')
         data = data.to_dict()
 
-        if str(place_id) not in list(data['place_id']): # verifies the place the review is for exists in db
+        if str(place_id) in list(data['place_id']): # verifies the place the review is for exists in db
             return {
                 'message': f"Place id {place_id} does not exist."
             }, 400
+        
         data.clear()
         data = pd.read_csv('csv/reviews.csv')
         
@@ -95,7 +109,7 @@ class Reviews(Resource):
 
         else:
             new_data = pd.DataFrame({
-                'review': [review_id],
+                'review_id': [review_id],
                 'user': [user],
                 'rating': [rating],
                 'text': [text]
@@ -103,7 +117,7 @@ class Reviews(Resource):
              # add the newly provided values
             data = data.append(new_data, ignore_index=True)
             # save back to CSV
-            data.to_csv('csv/places.csv', index=False)
+            data.to_csv('csv/reviews.csv', index=False)
             return {'data': data.to_dict()}, 200  # returns updated data with 200 OK
 
     def put(self):
